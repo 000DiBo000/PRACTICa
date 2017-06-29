@@ -113,11 +113,6 @@ namespace Game___Арканоид
                         this.Invalidate();
                     }
                     break;
-                /*case 4:
-                    if (e.X >= 440 && e.X <= 520 && e.Y >= 250 && e.Y <= 280)
-
-                    break;*/
-
             }
         }
 
