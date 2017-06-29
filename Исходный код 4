@@ -10,7 +10,6 @@ namespace Game___Арканоид
             InitializeComponent();
         }
 
-       
         int mode = 1;
 
         // Движение плотформы
@@ -146,6 +145,10 @@ namespace Game___Арканоид
             }
             else
             {
+                if (y <= 50)
+                {
+                    dy = -dy;
+                }
                 if (x - r <= 0 || x + r >= w) // шарик стукнулся о вертикальную границу
                 {
                     dx = -dx;
