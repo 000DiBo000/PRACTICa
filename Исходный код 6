@@ -1,0 +1,313 @@
+namespace Game___Арканоид
+{
+    public partial class Form1 : Form
+    {
+        SolidBrush A = new SolidBrush(Color.White);
+        Rectangle rect = new Rectangle(415, 400, 150, 18);
+        string readPath = "Таблица рекордов.txt";
+        string writePath = "Таблица рекордов.txt";
+        string text = "";
+        int I = 415;
+        int II = 565;
+        int mode = 1;
+        int Score = 0;
+        int Health = 3;
+        // Движение шарика + отскоки
+        int x = 485;
+        int y = 385;
+        int dx = 2;
+        int dy = 2;
+        int w = 975;
+        int h = 450;
+        int r = 3;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        // Движение платформы
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Left)
+            {
+                rect.Location = new Point(rect.Left - 50, rect.Top);
+                I = I - 50;
+                II = II - 50;
+            }
+            if (e.KeyCode == Keys.Right)
+            {
+                rect.Location = new Point(rect.Left + 50, rect.Top);
+                I = I + 50;
+                II = II + 50;
+            }
+            if (e.KeyCode == Keys.Space)
+                timer1.Start();
+            Refresh();
+        }
+
+        private void Form1_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            switch (mode)
+            {
+                // Меню 
+                case 1:
+                    if (Health == 2)
+                    {
+                        g.DrawString("Game oveR", new Font("Nautilus Pompilius", 26), new SolidBrush(Color.White), 406, 350);
+                        using (StreamWriter sw = new StreamWriter(writePath, true, System.Text.Encoding.Default))
+                            sw.WriteLine(Score);
+                    }
+                    Image newImage = Image.FromFile("aaa.png");
+                    PointF ulCorner = new Point(315, 0);
+                    g.DrawImage(newImage, ulCorner);
+                    g.FillRectangle(Brushes.Black, 390, 140, 200, 170);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 140, 390, 310);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 310, 590, 310);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 590, 310, 590, 140);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 590, 140, 390, 140);
+                    g.DrawString("Начать игру", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 430, 160);
+                    g.DrawString("Правила", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 448, 190);
+                    g.DrawString("Таблица рекордов", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 405, 220);
+                    g.DrawString("Выход", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 455, 250);
+                    break;
+                // Игровое окно 
+                case 2:
+                    g.DrawLine(new Pen(Color.Green, 4), 190, 170, 305, 170);
+                    g.DrawLine(new Pen(Color.Green, 4), 190, 200, 305, 200);
+                    g.DrawLine(new Pen(Color.Green, 4), 310, 200, 425, 200);
+                    g.DrawLine(new Pen(Color.Green, 4), 190, 140, 305, 140);
+                    g.DrawLine(new Pen(Color.Green, 4), 190, 110, 305, 110);
+                    g.DrawLine(new Pen(Color.Green, 4), 190, 80, 305, 80);
+                    // Отрисовка карты
+                    int[,] map = new int[5, 5];
+                    string[] lines = File.ReadAllLines("Map.txt");
+                    string[,] num = new string[lines.Length, lines[0].Split(' ').Length];
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        string[] temp = lines[i].Split(' ');
+                        for (int j = 0; j < temp.Length; j++)
+                            map[j, i] = Int32.Parse(temp[j]);
+                    }
+                    for (int i = 0; i < 5; i++)
+                    {
+                        for (int j = 0; j < 5; j++)
+                        {
+                            int k = 195 + i * 120;
+                            int t = 70 + j * 30;
+                            if (map[i, j] == 1)
+                                g.FillRectangle(Brushes.White, k, t , 110, 20);
+                        }
+                    }
+
+                    /*
+                    int aa = 190;
+                    int bb = 300;
+                    int f = 70;
+                    int u = 100;
+                    int o = 130;
+                    int l = 160;
+                    int q = 190;
+                    if ((x >= aa && x <= bb) && (y <= f + 1 && y >= f - 1))
+                    {
+                        dy = -dx;
+                        dx = -dy;
+                        g.FillRectangle(Brushes.Black, 195, 70, 110, 20);
+                        f = 0;
+                    }
+                    if ((x >= aa && x <= bb) && (y <= u + 1 && y >= u - 1))
+                    {
+                        dy = -dx;
+                        dx = -dy;
+                        g.FillRectangle(Brushes.Black, 195, 100, 110, 20);
+                        u = 0;
+                    }
+                    if ((x >= aa && x <= bb) && (y <= o + 1 && y >= o - 1))
+                    {
+                        dy = -dx;
+                        dx = -dy;
+                        g.FillRectangle(Brushes.Black, 195, 130, 110, 20);
+                        o = 0;
+                    }
+                    if ((x >= aa && x <= bb) && (y <= l + 1 && y >= l - 1))
+                    {
+                        dy = -dx;
+                        dx = -dy;
+                        g.FillRectangle(Brushes.Black, 195, 160, 110, 20);
+                        l = 0;
+                    }
+                    if ((x >= aa && x <= bb) && (y <= q + 1 && y >= q - 1))
+                    {
+                        dy = -dx;
+
+                        g.FillRectangle(Brushes.Black, 195, 190, 110, 20);
+                        q = 0;
+                    }*/
+
+                    int v = 0;
+                    int p = 0;
+                    for (int n = 0; n <= 100; n++)
+                    {
+                        for (int m = 0; m <= 5; m++)
+                        {
+                            if ((y >= 70 + v && y <= 90 + v) && (x >= 185 && x <= 305))
+                            {
+                                dy = -dx;
+                                g.FillRectangle(Brushes.Black, 195, 70 + v, 110, 30);
+                            }
+                            v += 30;
+                        }
+                    }
+                    g.FillEllipse(Brushes.DarkOrange, x, y, 15, 15); // Шарик
+                    x -= dx;
+                    y -= dy;
+                    if ((y >= 385 && y <= 390) && (x >= I && x <= II)) // Отскок от платформы
+                    {
+                        dy = -dy;
+                        Score += 20;
+                    }
+                    if (y >= 440)   // Исчезновение шарика
+                    {
+                        x = 485;
+                        y = 385;
+                        dy = -dy;
+                        dx = -dx;
+                        Health--;
+                        timer1.Stop();
+                        this.Invalidate(); 
+                    }
+                    if (Health == 2)
+                        mode = 1;
+                    else
+                    {
+                        if (y <= 50)
+                            dy = -dy;
+                        if (x - r <= 0 || x + r >= w) // шарик стукнулся о вертикальную границу
+                            dx = -dx;
+                        if (y - r <= 0 || y + r >= h) // шарик стукнулся о горизональную границу
+                            dy = -dy;   
+                    }
+                    // Отрисовка платформы
+                    g.FillRectangle(A, rect);
+                    g.DrawString("Меню", new Font("Nautilus Pompilius", 15), new SolidBrush(Color.White), 15, 13);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 10, 11, 75, 11);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 75, 11, 75, 40);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 75, 40, 10, 40);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 10, 40, 10, 11);
+                    g.DrawString("Очки: " + Score, new Font("Nautilus Pompilius", 17), new SolidBrush(Color.White), 100, 13);
+                    g.DrawString("Жизни: " + Health, new Font("Nautilus Pompilius", 17), new SolidBrush(Color.White), 200, 13);
+                    break;
+                // Правила 
+                case 3:
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 325, 130, 655, 130);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 655, 130, 655, 290);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 655, 290, 325, 290);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 325, 290, 325, 130);
+                    g.DrawString("   Цель игры «Арканоид» - уничтожить\n" +
+                    "мячиком все панельки.\n" +
+                    "   С помощью кнопок «влево – вправо»\n" +
+                    "управляй платформой. «Пробел» - за-\n" +
+                    "пуск шарика.\n", new Font("Nautilus Pompilius", 14), new SolidBrush(Color.White), 335, 140);
+                    g.DrawString("Назад", new Font("Nautilus Pompilius", 12), new SolidBrush(Color.White), 585, 255);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 580, 252, 640, 252);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 640, 252, 640, 278);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 640, 278, 580, 278);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 580, 278, 580, 252);
+                    timer1.Stop();
+                    break;
+                // Таблица рекордов
+                case 4:
+                    g.FillRectangle(Brushes.Gray, 242, 70, 500, 300);
+                    g.FillRectangle(Brushes.DarkOrange, 242, 70, 500, 30);
+                    g.DrawString("Назад", new Font("Nautilus Pompilius", 12), new SolidBrush(Color.White), 468, 400);
+                    this.Invalidate();
+                    break;
+                case 5:
+                    g.DrawString("Рекорды", new Font("Nautilus Pompilius", 18), new SolidBrush(Color.White), 400, 40);
+                    g.DrawString("1)\n" + "2)\n" + "3)\n" + "4)\n" + "5)\n" + "6)\n" + "7)\n"
+                    + "8)\n" + "9)\n" + "10)\n" + "11)\n" + "12)\n" + "13)\n" + "14)\n" + "15)\n"
+                    , new Font("Nautilus Pompilius", 14), new SolidBrush(Color.White), 380, 90);
+                    try
+                    {
+                        using (StreamReader sr = new StreamReader(readPath, System.Text.Encoding.Default))
+                            text = sr.ReadToEnd();
+                    }
+                    finally { g.DrawString(text, new Font("Nautilus Pompilius", 14), new SolidBrush(Color.White), 415, 90); };
+                    break;
+            }
+        }
+
+        private void Form1_MouseClick(object sender, MouseEventArgs e)
+        {
+            Graphics g = CreateGraphics();
+            switch (mode)
+            {
+                case 1:
+                    // Кнопка "Начать игру"   
+                    if (e.X >= 430 && e.X <= 590 && e.Y >= 140 && e.Y <= 180)
+                    {
+                        Health = 3;
+                        mode = 2;
+                        Score = 0;
+                        Rectangle rect = new Rectangle(415, 400, 150, 18);
+                        this.Invalidate();
+                    }
+                    // Кнопка "Правила"   
+                    if (e.X >= 430 && e.X <= 590 && e.Y >= 190 && e.Y <= 210)
+                    {
+                        mode = 3;
+                        this.Invalidate();
+                    }
+                    // Кнопка "Таблица рекордов"   
+                    if (e.X >= 402 && e.X <= 590 && e.Y >= 225 && e.Y <= 245)
+                    {
+                        mode = 5;
+                        this.Invalidate();
+                    }
+                    // Кнопка "Выход" 
+                    if (e.X >= 402 && e.X <= 590 && e.Y >= 257 && e.Y <= 275)
+                        this.Close();
+                    break;
+                // Кнопка "Меню"   
+                case 2:
+                    if (e.X >= 10 && e.X <= 75 && e.Y >= 11 && e.Y <= 40)
+                    {
+                        mode = 1;
+                        this.Invalidate();
+                        timer1.Stop();
+                        x = 485;
+                        y = 385;
+                    }
+                    break;
+                // Кнопка "Назад" в правилах   
+                case 3:
+                    if (e.X >= 580 && e.X <= 640 && e.Y >= 252 && e.Y <= 278)
+                    {
+                        mode = 1;
+                        this.Invalidate();
+                    }
+                    break;
+                // Кнопка "Назад" в таблице рекордов
+                case 4:
+                    if (e.X >= 400 && e.X <= 570 && e.Y >= 400 && e.Y <= 420)
+                    {
+                        mode = 1;
+                        this.Invalidate();
+                    }
+                    break;
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            this.Invalidate();
+        }      
+     }
+ }
+
+
