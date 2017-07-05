@@ -1,0 +1,431 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+using System.Collections;
+
+namespace Game___Арканоид
+{
+    public partial class Form1 : Form
+    {   
+        SolidBrush A = new SolidBrush(Color.White);
+        Rectangle rect = new Rectangle(435, 400, 90, 18);
+        string [] B = new string[21];
+        int I = 420;
+        int II = 520;
+        int mode = 1;
+        int Score = 0;
+        int Health = 3;
+        int[,] map = new int[5, 5];
+        // Движение шарика + отскоки
+        int x = 450;
+        int y = 385;
+        int dx = 2;
+        int dy = 2;
+        int w = 975;
+        int h = 450;
+        int r = 3;
+
+        string currentPlayerName = "Player1";
+        bool nameEnterd = false;
+        Records allRecords = new Records();
+
+        // Класс списка рекордов
+        class Records
+        {
+            //список рекордов
+            public List<Record> records = new List<Record>();
+            public int recordsLimit = 10;
+
+            // ЗАПИСЬ РЕКОРДОВ В ФАЙЛ
+            public void AddRecordAndWritrAllInFile(Record record)
+            {
+                records.Add(record);
+                // сортировака по убыванию очков 
+                records = records.OrderByDescending(x => x.points).ToList();
+
+                // оставляю не больше 10 рекордов
+                if (records.Count > recordsLimit)
+                {
+                    records.RemoveRange(10, records.Count-recordsLimit);
+                }
+
+                // склеивание текста файла из всех рекордов
+                string recordsText = string.Concat(records);
+                // запись в файл
+                File.WriteAllText("records.txt", recordsText);
+            }
+
+            // СЧИТЫВАНИЕ РЕКОРДОВ ИЗ ФАЙЛА
+            public void ReadRecordsFromFile(string pathToProfile)
+            {
+                records = new List<Record>();
+                string fileText = File.ReadAllText(pathToProfile);
+                // Разбивает на несколько строк нашу строку
+                string[] recordsStrings = fileText.Split('\n');
+
+                for (int i = 0; i < recordsStrings.Length-1; i++)
+                {
+                    string[] recordParts = recordsStrings[i].Split(',');
+                    // Имя - очки
+                    var readedPoints = Convert.ToInt32(recordParts[0]);
+                    var readedName = recordParts[1];
+                    readedName = readedName.Replace('\r', ' ');
+
+                    Record record = new Record(readedName, readedPoints);
+                    records.Add(record);
+                }
+            }
+            // ОТРИСОВКА ТЕКСТА РЕКОРДОВ
+            public void ViewRecords(Graphics g)
+            {
+                string recordsText = "";
+                foreach (var record in records)
+                {
+          recordsText += record.playerName + " - " + record.points + Environment.NewLine;
+                }
+
+                // Левый верхний угол 
+                int x = 390;
+                int y = 100;
+
+                g.DrawString(recordsText, new Font("Nautilus Pompilius", 18), new SolidBrush(Color.White), x, y);
+            }
+        }
+
+        // Класс рекорда
+        class Record
+        {
+            public string playerName;
+            public int points;
+
+            // Конструктор (Начальные значения имени и очков)
+            public Record(string argPlayerName, int argPoints)
+            {
+                points = argPoints;
+                playerName = argPlayerName;
+            }
+
+            // Перевод рекорда в строку
+            public override string ToString()
+            {
+           return String.Concat(points.ToString(), ",", playerName, Environment.NewLine);
+            }
+        }
+
+        public Form1()
+        {
+            InitializeComponent();
+            allRecords.ReadRecordsFromFile("records.txt");
+        }
+
+        // Движение платформы
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Left)
+            {
+                rect.Location = new Point(rect.Left - 30, rect.Top);
+                I = I - 30;
+                II = II - 30;
+            }
+            if (e.KeyCode == Keys.Right)
+            {
+                rect.Location = new Point(rect.Left + 30, rect.Top);
+                I = I + 30;
+                II = II + 30;
+            }
+            if (e.KeyCode == Keys.Space)
+                timer1.Start();
+
+
+            Refresh();
+        }
+        // Отрисовка имени игрока 
+        private void DrawName(Graphics g)
+        {
+            // Рисую на главной
+            if (mode == 1)
+            {
+                // Прямоугольник для затирания старой надписи
+                g.FillRectangle(new SolidBrush(Color.Black), 400, 310, 180, 30);
+
+                g.DrawString(currentPlayerName, new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 422, 310);
+            }
+        }
+
+        private void Form1_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            DrawName(g);
+            switch (mode)
+            {
+                // Меню 
+                case 1:
+                    if (Health == 0)
+                    {
+                        g.DrawString("Game oveR", new Font("Nautilus Pompilius", 26), new SolidBrush(Color.White), 408, 350);
+                        timer1.Interval = 40;
+                        x = 200;
+                        y = 385;
+                    }
+                    if (Score == 750)
+                    {
+                        g.DrawString("You WIN!", new Font("Nautilus Pompilius", 26), new SolidBrush(Color.White), 408, 350);
+                        timer1.Interval = 40;
+                        x = 700;
+                        y = 385;
+                    }
+                    Image newImage = Image.FromFile("aaa.png");
+                    PointF ulCorner = new Point(315, 0);
+                    g.DrawImage(newImage, ulCorner);
+                   
+                    g.DrawString("Начать игру", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 430, 160);
+                    g.DrawString("Правила", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 448, 190);
+                    g.DrawString("Таблица рекордов", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 405, 220);
+                    g.DrawString("Выход", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 457, 250);
+                    g.DrawString("Введите имя:", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 422, 275);
+
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 308, 590, 308);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 343, 590, 343);
+
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 140, 390, 400);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 390, 400, 590, 400);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 590, 140, 590, 400);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 590, 140, 390, 140);
+                    break;
+                // Игровое поле 
+                case 2:
+                    // Отрисовка карты
+                    for (int i = 0; i < 5; i++)
+                    {
+                        for (int j = 0; j < 5; j++)
+                        {
+                            int k = 195 + i * 120;
+                            int t = 70 + j * 30;
+                            if (map[i, j] == 1)
+                                g.FillRectangle(Brushes.White, k, t, 110, 20);
+                            // Отскоки мячика от блоков
+        if ((x >= 195 - 7 + i * 120 && x <= 305 - 7 + i * 120 && y == 70 - 7 + j * 30) ||
+            (x >= 195 - 7 + i * 120 && x <= 305 - 7 + i * 120 && y == 90 - 7 + j * 30))
+                            {
+                                if (map[i, j] == 1)
+                                {
+                                    if (timer1.Interval != 1)
+                                        timer1.Interval -= 2;
+                                    Score += 30;
+                                    dy = -dy;
+                                    map[i, j] = 0;
+                                }
+                            }
+          if ((x == 195 - 7 + i * 120 && y >= 70 - 7 + j * 30 && y <= 90 - 7 + j * 30) ||
+              (x == 305 - 7 + i * 120 && y >= 70 - 7 + j * 30 && y <= 90 - 7 + j * 30))
+                            {
+                                if (map[i, j] == 1)
+                                {
+                                    if (timer1.Interval != 1)
+                                        timer1.Interval -= 2;
+                                    Score += 30;
+                                    dx = -dx;
+                                    map[i, j] = 0;
+                                }
+                            }
+                        }
+                    }
+                    // Условие выигрыша
+                    if (Score == 750)
+                    {
+             allRecords.AddRecordAndWritrAllInFile(new Record(currentPlayerName, Score));
+                        mode = 1;
+                    }
+                    g.FillEllipse(Brushes.DarkOrange, x, y, 15, 15); // Мячик
+                    x -= dx;
+                    y -= dy;
+                    if (y == 385 && (x >= I && x <= II)) // Отскок от ракетки
+                    {
+                        if (timer1.Interval != 1)
+                            timer1.Interval -= 2;
+                        dy = -dy;
+                    }
+                    if (y >= 440) // Исчезновение шарика
+                    {
+                        x = 495;
+                        y = 385;
+                        dy = -dy;
+                        dx = -dx;
+                        Health--;
+                        timer1.Stop();
+                        this.Invalidate();
+                    }
+                    // Условие проигрыша
+                    if (Health == 0)
+                    {
+             allRecords.AddRecordAndWritrAllInFile(new Record(currentPlayerName, Score));
+                        mode = 1;
+                    }
+                    if (y <= 50)
+                        dy = -dy;
+                  if (x - r <= 0 || x + r >= w) // Мячик стукнулся о вертикальную границу
+                    {
+                        if (timer1.Interval != 1)
+                            timer1.Interval -= 2;
+                        dx = -dx;
+                    }
+                 if (y - r <= 0 || y + r >= h) // Мячик стукнулся о горизональную границу
+                    {
+                        if (timer1.Interval != 1)
+                            timer1.Interval -= 2;
+                        dy = -dy;
+                    }
+                    // Отрисовка ракетки
+                    g.FillRectangle(A, rect);
+                    g.DrawString("Меню", new Font("Nautilus Pompilius", 15), new SolidBrush(Color.White), 15, 13);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 10, 11, 75, 11);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 75, 11, 75, 40);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 75, 40, 10, 40);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 10, 40, 10, 11);
+                    g.DrawString("Очки: " + Score, new Font("Nautilus Pompilius", 17), new SolidBrush(Color.White), 100, 13);
+                    g.DrawString("Жизни: " + Health, new Font("Nautilus Pompilius", 17), new SolidBrush(Color.White), 200, 13);
+                    break;
+                // Правила 
+                case 3:
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 325, 130, 655, 130);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 655, 130, 655, 290);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 655, 290, 325, 290);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 325, 290, 325, 130);
+                    g.DrawString("   Цель игры «Арканоид» - уничтожить\n" +
+                    "мячиком все блоки.\n" +
+                    "   С помощью кнопок «влево – вправо»\n" +
+                    "управляй платформой. «Пробел» - за-\n" +
+                    "пуск шарика.\n", new Font("Nautilus Pompilius", 14), new SolidBrush(Color.White), 335, 140);
+                    g.DrawString("Назад", new Font("Nautilus Pompilius", 12), new SolidBrush(Color.White), 585, 255);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 580, 252, 640, 252);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 640, 252, 640, 278);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 640, 278, 580, 278);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 580, 278, 580, 252);
+                    timer1.Stop();
+                    break;
+                // Таблица рекордов
+                case 4:
+                    g.DrawString("РЕКОРДЫ", new Font("Nautilus Pompilius", 16), new SolidBrush(Color.White), 435, 45);
+
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 382, 35, 598, 35);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 598, 35, 598, 425);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 598, 425, 382, 425);
+                    g.DrawLine(new Pen(Color.DarkOrange, 4), 382, 425, 382, 35);
+                    
+                    allRecords.ViewRecords(g);
+                    break;
+            }
+        }
+        private void Form1_MouseClick(object sender, MouseEventArgs e)
+        {
+            Graphics g = CreateGraphics();
+            switch (mode)
+            {
+                case 1:
+                    // Кнопка "Начать игру"   
+                    if (e.X >= 430 && e.X <= 590 && e.Y >= 140 && e.Y <= 180)
+                    {
+                        Health = 3;
+                        mode = 2;
+                        Score = 0;
+                        int dy = 1; // Устраняет полет шарика вниз при перезапуске игры
+                        Rectangle rect = new Rectangle(415, 400, 150, 18);
+                        string[] lines = File.ReadAllLines("Map.txt");
+                    string[,] num = new string[lines.Length, lines[0].Split(' ').Length];
+                        for (int i = 0; i < lines.Length; i++)
+                        {
+                            string[] temp = lines[i].Split(' ');
+                            for (int j = 0; j < temp.Length; j++)
+                                map[j, i] = Int32.Parse(temp[j]);
+                        }
+                    }
+                    // Кнопка "Правила"   
+                    if (e.X >= 430 && e.X <= 590 && e.Y >= 190 && e.Y <= 210)
+                    {
+                        mode = 3;
+                    }
+                    // Кнопка "Таблица рекордов"   
+                    if (e.X >= 402 && e.X <= 590 && e.Y >= 225 && e.Y <= 245)
+                    {
+                        mode = 4;
+                    }
+                    // Кнопка "Выход" 
+                    if (e.X >= 402 && e.X <= 590 && e.Y >= 257 && e.Y <= 275)
+                        this.Close();
+                    break;
+                // Кнопка "Меню"    
+                case 2:
+                    if (e.X >= 10 && e.X <= 75 && e.Y >= 11 && e.Y <= 40)
+                    {
+                        mode = 1;
+                        timer1.Stop();
+                        x = 495;
+                        y = 385;
+                    }
+                    break;
+                // Кнопка "Назад" в правилах   
+                case 3:
+                    if (e.X >= 580 && e.X <= 640 && e.Y >= 252 && e.Y <= 278)
+                    {
+                        mode = 1;
+                    }
+                    break;
+                // Кнопка "Назад" в таблице рекордов
+                case 4:
+                    if (e.X >= 0 && e.X <= 1000 && e.Y >= 0 && e.Y <= 500 )
+                    {
+                        mode = 1;
+                    }
+                    break;
+            }
+            Invalidate();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            this.Invalidate();
+        }
+
+        // по отпусканию кнопки
+        private void Form1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Был нажат Enter - блокировка/разблок. ввода имени
+            if (e.KeyChar == 13/*код Enter*/)
+            {
+                nameEnterd = !nameEnterd;
+            }
+            // Если буква или цифра - приписываем к имени
+            if (char.IsLetter(e.KeyChar) || char.IsDigit(e.KeyChar))
+            {
+                if (!nameEnterd)
+                {
+                    currentPlayerName += e.KeyChar;
+                }
+            }
+            // Был нажат Backspace и ввод не заблокирован
+            if (e.KeyChar == 8 && !nameEnterd)
+            {
+                if (!String.IsNullOrEmpty(currentPlayerName))
+                {
+                    // Удаляем 1 символ с конца
+                    currentPlayerName = currentPlayerName.Remove(currentPlayerName.Count() - 1,1);
+                }
+            }
+            // Отрисовать имя заново
+            DrawName(CreateGraphics());
+        }
+
+    }
+}
